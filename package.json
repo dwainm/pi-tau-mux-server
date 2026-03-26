@@ -1,6 +1,6 @@
 {
   "name": "pi-tau-mux-server",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Standalone Tau server - aggregates multiple pi coding agent instances into one web UI with Tailscale support",
   "author": "dwainm",
   "license": "MIT",
