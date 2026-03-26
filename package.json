@@ -1,0 +1,43 @@
+{
+  "name": "pi-tau-mux-server",
+  "version": "1.0.0",
+  "description": "Standalone Tau server - aggregates multiple pi coding agent instances into one web UI with Tailscale support",
+  "author": "dwainm",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dwainm/pi-tau-mux-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/dwainm/pi-tau-mux-server/issues"
+  },
+  "homepage": "https://github.com/dwainm/pi-tau-mux-server#readme",
+  "bin": {
+    "pi-tau-mux-server": "./bin/server.js"
+  },
+  "main": "src/server.js",
+  "files": [
+    "bin/",
+    "src/",
+    "public/"
+  ],
+  "scripts": {
+    "start": "node bin/server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "qrcode": "^1.5.3",
+    "ws": "^8.14.0"
+  },
+  "keywords": [
+    "pi",
+    "pi-coding-agent",
+    "tau",
+    "mux",
+    "aggregator",
+    "web-ui",
+    "tailscale"
+  ]
+}
