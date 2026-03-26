@@ -255,7 +255,7 @@ async function parseSessionFile(filePath) {
 // API endpoints
 // ─────────────────────────────────────────────────────────────
 
-async function serveSessionsList(res) {
+async function serveSessionsList(res, statusFilter = null) {
   try {
     if (!fs.existsSync(SESSIONS_DIR)) {
       res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -283,6 +283,10 @@ async function serveSessionsList(res) {
           if (parsed) {
             const stat = fs.statSync(filePath);
             const status = getSessionStatus(filePath);
+            
+            // Filter by status if requested
+            if (statusFilter && status !== statusFilter) continue;
+            
             const session = {
               ...parsed,
               file,
@@ -408,7 +412,9 @@ function handleApiRoute(req, res, urlPath) {
   }
   
   if (urlPath === '/api/sessions' && req.method === 'GET') {
-    serveSessionsList(res);
+    const urlObj = new URL(req.url, `http://${req.headers.host}`);
+    const statusFilter = urlObj.searchParams.get('status'); // 'active', 'ended', or null (all)
+    serveSessionsList(res, statusFilter);
     return;
   }
   
