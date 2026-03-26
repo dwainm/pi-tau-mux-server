@@ -500,6 +500,10 @@ body {
 .new-session-btn { color: var(--accent-text); }
 
 .icon-btn.spinning { animation: spin 0.5s ease; }
+.icon-btn.active {
+  background: var(--bg-glass-active);
+  color: var(--accent);
+}
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
 /* Session list */

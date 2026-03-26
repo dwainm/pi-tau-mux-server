@@ -39,6 +39,7 @@ const sidebarToggle = document.getElementById('sidebar-toggle');
 const sidebarOverlay = document.getElementById('sidebar-overlay');
 
 const refreshSessionsBtn = document.getElementById('refresh-sessions-btn');
+const toggleAllSessionsBtn = document.getElementById('toggle-all-sessions-btn');
 const sessionSearchInput = document.getElementById('session-search-input');
 const typingIndicator = document.getElementById('typing-indicator');
 
@@ -991,6 +992,16 @@ refreshSessionsBtn.addEventListener('click', () => {
     setTimeout(() => refreshSessionsBtn.classList.remove('spinning'), 600);
     if (isMirrorMode) updateMirrorLiveIndicator();
   });
+});
+
+// Toggle between active and all sessions
+toggleAllSessionsBtn.addEventListener('click', () => {
+  sidebar.toggleShowAll();
+  const showingAll = sidebar.showAllSessions;
+  toggleAllSessionsBtn.title = showingAll 
+    ? "Show active sessions only" 
+    : "Show all sessions (currently showing active only)";
+  toggleAllSessionsBtn.classList.toggle('active', showingAll);
 });
 
 // Swipe from left edge to open sidebar on mobile

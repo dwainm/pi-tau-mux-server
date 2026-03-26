@@ -12,6 +12,7 @@ export class SessionSidebar {
     this.searchQuery = '';
     this.favourites = JSON.parse(localStorage.getItem('tau-favourites') || '[]');
     this.contextMenu = null;
+    this.showAllSessions = false; // Default to active only
 
     // Close context menu on click anywhere
     document.addEventListener('click', () => this.closeContextMenu());
@@ -19,6 +20,11 @@ export class SessionSidebar {
       // Close if right-clicking outside a session item
       if (!e.target.closest('.session-item')) this.closeContextMenu();
     });
+  }
+  
+  toggleShowAll() {
+    this.showAllSessions = !this.showAllSessions;
+    this.loadSessions();
   }
 
   saveFavourites() {
@@ -45,7 +51,9 @@ export class SessionSidebar {
       this.container.innerHTML = Array.from({length: 6}, () =>
         '<div class="session-skeleton"><div class="session-skeleton-title"></div><div class="session-skeleton-meta"></div></div>'
       ).join('');
-      const res = await fetch('/api/sessions');
+      // Default to active sessions only (recently modified)
+      const statusFilter = this.showAllSessions ? '' : '?status=active';
+      const res = await fetch('/api/sessions' + statusFilter);
       const data = await res.json();
       this.projects = data.projects || [];
       this.render();
