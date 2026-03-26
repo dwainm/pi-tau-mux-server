@@ -255,7 +255,7 @@ async function parseSessionFile(filePath) {
 // API endpoints
 // ─────────────────────────────────────────────────────────────
 
-async function serveSessionsList(res, statusFilter = null) {
+async function serveSessionsList(res) {
   try {
     if (!fs.existsSync(SESSIONS_DIR)) {
       res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -283,10 +283,6 @@ async function serveSessionsList(res, statusFilter = null) {
           if (parsed) {
             const stat = fs.statSync(filePath);
             const status = getSessionStatus(filePath);
-            
-            // Filter by status if requested
-            if (statusFilter && status !== statusFilter) continue;
-            
             const session = {
               ...parsed,
               file,
@@ -316,7 +312,7 @@ async function serveSessionsList(res, statusFilter = null) {
       if (!dir.isDirectory()) continue;
       
       const { cwd, paneId } = decodeSessionDir(dir.name);
-      const sessions = allSessions.filter(s => s.dirName === dir.name);
+      const sessions = allSessions.filter(s => s.dirName === dir.name && s.status === 'active');
       if (sessions.length === 0) continue;
       
       sessions.sort((a, b) => b.mtime - a.mtime);
@@ -411,10 +407,8 @@ function handleApiRoute(req, res, urlPath) {
     return;
   }
   
-  if (urlPath.startsWith('/api/sessions') && req.method === 'GET') {
-    const urlObj = new URL(req.url, `http://${req.headers.host}`);
-    const statusFilter = urlObj.searchParams.get('status'); // 'active', 'ended', or null (all)
-    serveSessionsList(res, statusFilter);
+  if (urlPath === '/api/sessions' && req.method === 'GET') {
+    serveSessionsList(res);
     return;
   }
   
@@ -541,6 +535,15 @@ function handlePiMessage(ws, msg) {
     case 'register':
       piClients.set(msg.sessionId, ws);
       console.log(`[Tau Mux] Registered session: ${msg.sessionId}`);
+      // Send server URLs back to the client
+      ws.send(JSON.stringify({ 
+        type: 'registered', 
+        serverUrls: {
+          local: `http://localhost:${PORT}`,
+          tailscale: tailscaleInfo ? (tailscaleInfo.ip ? `http://${tailscaleInfo.ip}:${PORT}` : null) : null,
+          magicDns: tailscaleInfo?.hostname ? `http://${tailscaleInfo.hostname}:${PORT}` : null
+        }
+      }));
       broadcastToBrowsers({ type: 'pi_registered', sessionId: msg.sessionId });
       break;
     
