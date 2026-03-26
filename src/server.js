@@ -407,6 +407,12 @@ function handleApiRoute(req, res, urlPath) {
     return;
   }
   
+  if (urlPath === '/api/instances') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ instances: Array.from(piClients.keys()) }));
+    return;
+  }
+  
   if (urlPath === '/api/sessions' && req.method === 'GET') {
     serveSessionsList(res);
     return;
