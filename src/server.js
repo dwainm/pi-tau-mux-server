@@ -411,7 +411,7 @@ function handleApiRoute(req, res, urlPath) {
     return;
   }
   
-  if (urlPath === '/api/sessions' && req.method === 'GET') {
+  if (urlPath.startsWith('/api/sessions') && req.method === 'GET') {
     const urlObj = new URL(req.url, `http://${req.headers.host}`);
     const statusFilter = urlObj.searchParams.get('status'); // 'active', 'ended', or null (all)
     serveSessionsList(res, statusFilter);
