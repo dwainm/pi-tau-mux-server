@@ -257,7 +257,7 @@ async function parseSessionFile(filePath) {
 // API endpoints
 // ─────────────────────────────────────────────────────────────
 
-async function serveSessionsList(res) {
+async function serveSessionsList(res, statusFilter = null) {
   try {
     if (!fs.existsSync(SESSIONS_DIR)) {
       res.writeHead(200, { 'Content-Type': 'application/json' });
@@ -314,7 +314,11 @@ async function serveSessionsList(res) {
       if (!dir.isDirectory()) continue;
       
       const { cwd, paneId } = decodeSessionDir(dir.name);
-      const sessions = allSessions.filter(s => s.dirName === dir.name && (s.status === 'active' || s.status === 'recent'));
+      const sessions = allSessions.filter(s => {
+        if (s.dirName !== dir.name) return false;
+        if (statusFilter === 'active') return s.status === 'active';
+        return s.status === 'active' || s.status === 'recent';
+      });
       if (sessions.length === 0) continue;
       
       sessions.sort((a, b) => b.mtime - a.mtime);
@@ -397,7 +401,10 @@ const server = http.createServer((req, res) => {
 });
 
 function handleApiRoute(req, res, urlPath) {
-  if (urlPath === '/api/health') {
+  // Strip query string for route matching
+  const cleanPath = urlPath.split('?')[0];
+  
+  if (cleanPath === '/api/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ 
       status: 'ok', 
@@ -409,18 +416,21 @@ function handleApiRoute(req, res, urlPath) {
     return;
   }
   
-  if (urlPath === '/api/instances') {
+  if (cleanPath === '/api/instances') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ instances: Array.from(piClients.keys()) }));
     return;
   }
   
-  if (urlPath === '/api/sessions' && req.method === 'GET') {
-    serveSessionsList(res);
+  if (cleanPath === '/api/sessions' && req.method === 'GET') {
+    // Parse query parameters (e.g., ?status=active)
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const statusFilter = url.searchParams.get('status');
+    serveSessionsList(res, statusFilter);
     return;
   }
   
-  if (urlPath === '/api/qr') {
+  if (cleanPath === '/api/qr') {
     const url = getPreferredUrl(PORT);
     QRCode.toDataURL(url, { width: 256, margin: 2 }).then(dataUrl => {
       res.writeHead(200, { 'Content-Type': 'text/html' });
@@ -430,7 +440,7 @@ function handleApiRoute(req, res, urlPath) {
   }
   
   // Switch session (no-op in mux mode - just acknowledge)
-  if (urlPath === '/api/sessions/switch' && req.method === 'POST') {
+  if (cleanPath === '/api/sessions/switch' && req.method === 'POST') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ success: true }));
     return;
