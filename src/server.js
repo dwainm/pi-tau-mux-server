@@ -41,7 +41,8 @@ function findPublicDir() {
 }
 
 // Session lifecycle thresholds
-const ACTIVE_SESSION_THRESHOLD_MS = 3 * 24 * 60 * 60 * 1000; // 3 days
+const ACTIVE_SESSION_THRESHOLD_MS = 15 * 60 * 1000; // 15 minutes (currently active)
+const RECENT_SESSION_THRESHOLD_MS = 24 * 60 * 60 * 1000; // 24 hours (recently used)
 const STALE_SESSION_THRESHOLD_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
 // State
@@ -150,6 +151,7 @@ function getSessionStatus(sessionFile) {
     if (hasEndMarker(sessionFile)) return 'ended';
     if (ageMs > STALE_SESSION_THRESHOLD_MS) return 'stale';
     if (ageMs < ACTIVE_SESSION_THRESHOLD_MS) return 'active';
+    if (ageMs < RECENT_SESSION_THRESHOLD_MS) return 'recent';
     return 'ended';
   } catch {
     return 'ended';
@@ -312,7 +314,7 @@ async function serveSessionsList(res) {
       if (!dir.isDirectory()) continue;
       
       const { cwd, paneId } = decodeSessionDir(dir.name);
-      const sessions = allSessions.filter(s => s.dirName === dir.name && s.status === 'active');
+      const sessions = allSessions.filter(s => s.dirName === dir.name && (s.status === 'active' || s.status === 'recent'));
       if (sessions.length === 0) continue;
       
       sessions.sort((a, b) => b.mtime - a.mtime);
