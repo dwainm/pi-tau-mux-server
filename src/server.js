@@ -486,52 +486,49 @@ wss.on('connection', (ws) => {
   });
 });
 
+// ─────────────────────────────────────────────────────────────
+// WebSocket Server - Pi client connections
+// ─────────────────────────────────────────────────────────────
+
+const wssPi = new WebSocketServer({ noServer: true });
+
+wssPi.on('connection', (ws) => {
+  console.log('[Tau Mux] Pi client connected');
+  
+  ws.on('message', (data) => {
+    try {
+      const msg = JSON.parse(data.toString());
+      handlePiMessage(ws, msg);
+    } catch (e) {
+      console.error('[Tau Mux] Failed to parse pi message:', e);
+    }
+  });
+  
+  ws.on('close', () => {
+    console.log('[Tau Mux] Pi client disconnected');
+    // Remove from piClients
+    for (const [sessionId, client] of piClients.entries()) {
+      if (client === ws) {
+        piClients.delete(sessionId);
+        break;
+      }
+    }
+  });
+});
+
 server.on('upgrade', (request, socket, head) => {
   if (request.url === '/ws') {
     wss.handleUpgrade(request, socket, head, (ws) => {
       wss.emit('connection', ws, request);
     });
   } else if (request.url === '/pi') {
-    // Pi client connection
-    handlePiConnection(request, socket, head);
+    wssPi.handleUpgrade(request, socket, head, (ws) => {
+      wssPi.emit('connection', ws, request);
+    });
   } else {
     socket.destroy();
   }
 });
-
-// ─────────────────────────────────────────────────────────────
-// WebSocket Server - Pi client connections
-// ─────────────────────────────────────────────────────────────
-
-function handlePiConnection(request, socket, head) {
-  // Create a separate WebSocket server for pi clients
-  const ws = new WebSocket(null);
-  
-  // Manually handle the upgrade
-  wss.handleUpgrade(request, socket, head, (ws) => {
-    console.log('[Tau Mux] Pi client connected');
-    
-    ws.on('message', (data) => {
-      try {
-        const msg = JSON.parse(data.toString());
-        handlePiMessage(ws, msg);
-      } catch (e) {
-        console.error('[Tau Mux] Failed to parse pi message:', e);
-      }
-    });
-    
-    ws.on('close', () => {
-      console.log('[Tau Mux] Pi client disconnected');
-      // Remove from piClients
-      for (const [sessionId, client] of piClients.entries()) {
-        if (client === ws) {
-          piClients.delete(sessionId);
-          break;
-        }
-      }
-    });
-  });
-}
 
 function handlePiMessage(ws, msg) {
   switch (msg.type) {
